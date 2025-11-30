@@ -38,6 +38,8 @@
       display: flex;
       gap: 12px;
       align-items: center;
+      flex-wrap: wrap;
+      justify-content: center;
     }
     .hud-label {
       padding: 4px 10px;
@@ -64,9 +66,9 @@
 
     #board {
       display: grid;
-      grid-template-columns: repeat(6, minmax(0, 1fr));
+      grid-template-columns: repeat(6, minmax(0, 1fr)); /* even width */
       gap: 14px;
-      max-width: 900px;
+      max-width: 1100px;
       width: 100%;
     }
     .card {
@@ -168,6 +170,7 @@
     <div id="hud-info">
       <div class="hud-label">Moves: <span id="moves">0</span></div>
       <div class="hud-label">Matches: <span id="matches">0</span> / <span id="matchesMax">0</span></div>
+      <div class="hud-label">Time: <span id="time">0.0</span>s</div>
     </div>
 
     <button id="trebleBtn" class="btn mode-btn">Treble only</button>
@@ -216,6 +219,7 @@
     const movesEl      = document.getElementById("moves");
     const matchesEl    = document.getElementById("matches");
     const matchesMaxEl = document.getElementById("matchesMax");
+    const timeEl       = document.getElementById("time");
     const trebleBtn    = document.getElementById("trebleBtn");
     const bassBtn      = document.getElementById("bassBtn");
     const bothBtn      = document.getElementById("bothBtn");
@@ -226,6 +230,10 @@
     let moves   = 0;
     let matches = 0;
     let clefMode = "treble";   // "treble", "bass", "both"
+
+    // timer state
+    let timerStart = null;
+    let timerInterval = null;
 
     // Build deck: for EVERY note in the clef(s), create:
     // - 1 notation card
@@ -331,6 +339,26 @@
       });
     }
 
+    function startTimerIfNeeded() {
+      if (timerStart !== null) return;
+      timerStart = Date.now();
+      timerInterval = setInterval(updateTimer, 100);
+    }
+
+    function updateTimer() {
+      if (timerStart === null) return;
+      const elapsedMs = Date.now() - timerStart;
+      const seconds = elapsedMs / 1000;
+      timeEl.textContent = seconds.toFixed(1);
+    }
+
+    function stopTimer() {
+      if (timerInterval !== null) {
+        clearInterval(timerInterval);
+        timerInterval = null;
+      }
+    }
+
     function flip(el) {
       if (lock) return;
 
@@ -356,19 +384,27 @@
         first.card.kind !== second.card.kind;
 
       if (isMatch) {
+        // start timer on first successful match
+        startTimerIfNeeded();
+
         first.el.classList.add("match");
         second.el.classList.add("match");
         matches++;
         matchesEl.textContent = matches;
         first = null;
         lock = false;
+
+        // if all pairs matched, stop timer
+        if (matches === deck.length / 2) {
+          stopTimer();
+        }
       } else {
         setTimeout(() => {
           first.el.classList.remove("flipped");
           second.el.classList.remove("flipped");
           first = null;
           lock = false;
-        }, 2000);
+        }, 2000); // 2 second view before flip back, adjust if you want
       }
     }
 
@@ -379,6 +415,12 @@
       movesEl.textContent = "0";
       matchesEl.textContent = "0";
       matchesMaxEl.textContent = deck.length / 2;
+
+      // reset timer
+      stopTimer();
+      timerStart = null;
+      timeEl.textContent = "0.0";
+
       first = null;
       lock = false;
       updateModeButtons();
