@@ -27,24 +27,41 @@
     }
     #hud {
       display: flex;
-      gap: 16px;
+      gap: 10px;
       align-items: center;
       margin-bottom: 16px;
       font-size: 0.95rem;
       flex-wrap: wrap;
       justify-content: center;
     }
-    #hud button {
-      padding: 6px 14px;
+    #hud-info {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+    }
+    .hud-label {
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: #020617;
+      border: 1px solid #374151;
+    }
+    .btn {
+      padding: 6px 12px;
       border-radius: 999px;
       border: 1px solid #4b5563;
       background: #111827;
       color: #e5e7eb;
       cursor: pointer;
+      font-size: 0.85rem;
     }
-    #hud button:hover {
+    .btn:hover {
       background: #1f2937;
     }
+    .mode-btn.active {
+      background: #2563eb;
+      border-color: #60a5fa;
+    }
+
     #board {
       display: grid;
       grid-template-columns: repeat(6, minmax(0, 1fr));
@@ -148,9 +165,16 @@
   <h1>Clef Memory</h1>
 
   <div id="hud">
-    <div>Moves: <span id="moves">0</span></div>
-    <div>Matches: <span id="matches">0</span> / 24</div>
-    <button id="restartBtn">Restart</button>
+    <div id="hud-info">
+      <div class="hud-label">Moves: <span id="moves">0</span></div>
+      <div class="hud-label">Matches: <span id="matches">0</span> / <span id="matchesMax">0</span></div>
+    </div>
+
+    <button id="trebleBtn" class="btn mode-btn">Treble only</button>
+    <button id="bassBtn"   class="btn mode-btn">Bass only</button>
+    <button id="bothBtn"   class="btn mode-btn">Both clefs</button>
+
+    <button id="restartBtn" class="btn">Restart</button>
   </div>
 
   <div id="board"></div>
@@ -186,19 +210,27 @@
       { id:"bass_B3", clef:"bass", letter:"B", key:"b/3" }
     ];
 
-    const boardEl   = document.getElementById("board");
-    const movesEl   = document.getElementById("moves");
-    const matchesEl = document.getElementById("matches");
+    const boardEl     = document.getElementById("board");
+    const movesEl     = document.getElementById("moves");
+    const matchesEl   = document.getElementById("matches");
+    const matchesMaxEl= document.getElementById("matchesMax");
+    const trebleBtn   = document.getElementById("trebleBtn");
+    const bassBtn     = document.getElementById("bassBtn");
+    const bothBtn     = document.getElementById("bothBtn");
 
     let deck    = [];
     let first   = null;
     let lock    = false;
     let moves   = 0;
     let matches = 0;
+    let clefMode = "both"; // "treble", "bass", "both"
 
     function buildDeck() {
       const arr = [];
       notes.forEach(n => {
+        if (clefMode === "treble" && n.clef !== "treble") return;
+        if (clefMode === "bass"   && n.clef !== "bass")   return;
+
         arr.push({ kind:"note", pairId:n.id, clef:n.clef, letter:n.letter, key:n.key });
         arr.push({ kind:"name", pairId:n.id, clef:n.clef, letter:n.letter });
       });
@@ -257,7 +289,7 @@
         renderer.resize(180, 170);
         const ctx = renderer.getContext();
 
-        /* Make notation bright white for contrast */
+        // white notation on dark background
         ctx.setFillStyle("#ffffff");
         ctx.setStrokeStyle("#ffffff");
         ctx.setFont("16px Arial", 16);
@@ -327,13 +359,46 @@
       matches = 0;
       movesEl.textContent = "0";
       matchesEl.textContent = "0";
+      matchesMaxEl.textContent = deck.length / 2;
       first = null;
       lock = false;
+      updateModeButtons();
       renderBoard();
     }
 
+    function updateModeButtons() {
+      trebleBtn.classList.remove("active");
+      bassBtn.classList.remove("active");
+      bothBtn.classList.remove("active");
+
+      if (clefMode === "treble") {
+        trebleBtn.classList.add("active");
+      } else if (clefMode === "bass") {
+        bassBtn.classList.add("active");
+      } else {
+        bothBtn.classList.add("active");
+      }
+    }
+
+    // Button listeners
     document.getElementById("restartBtn").addEventListener("click", restart);
 
+    trebleBtn.addEventListener("click", () => {
+      clefMode = "treble";
+      restart();
+    });
+
+    bassBtn.addEventListener("click", () => {
+      clefMode = "bass";
+      restart();
+    });
+
+    bothBtn.addEventListener("click", () => {
+      clefMode = "both";
+      restart();
+    });
+
+    // Start game
     restart();
   </script>
 </body>
