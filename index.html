@@ -3,6 +3,9 @@
 <head>
   <meta charset="UTF-8">
   <title>Clef Memory Game</title>
+  <!-- VexFlow for real notation rendering -->
+  <script src="https://cdn.jsdelivr.net/npm/vexflow@5.0.0/build/cjs/vexflow.js"></script>
+
   <style>
     * { box-sizing: border-box; }
     body {
@@ -68,7 +71,7 @@
       position: relative;
     }
 
-    /* Big green checkmark */
+    /* Big green checkmark over matched pair */
     .card.matched::after {
       content: "✔";
       position: absolute;
@@ -82,7 +85,6 @@
       z-index: 10;
     }
 
-    /* flipping logic */
     .card-face {
       position: absolute;
       inset: 0;
@@ -109,7 +111,7 @@
       display: flex;
     }
 
-    /* Name cards */
+    /* Name cards (letter + clef text) */
     .name-card {
       display: flex;
       flex-direction: column;
@@ -129,40 +131,14 @@
       opacity: 0.7;
     }
 
-    /* Staff note cards */
-    .mini-staff {
-      position: relative;
+    /* VexFlow staff container inside each note card */
+    .vf-staff {
       width: 100%;
       height: 140px;
-      background: #020617;
-      border-radius: 8px;
-      border: 1px solid #374151;
     }
-    .staff-line {
-      position: absolute;
-      left: 10px;
-      right: 10px;
-      height: 2px;
-      background: #e5e7eb;
-      opacity: 0.9;
-    }
-    .clef-symbol {
-      position: absolute;
-      left: 14px;
-      top: 52px;
-      font-size: 1.7rem;
-      opacity: 0.9;
-    }
-    .note-head {
-      position: absolute;
-      left: 60%;
-      width: 22px;
-      height: 16px;
-      border-radius: 50%;
-      background: #fbbf24;
-      border: 2px solid #f59e0b;
-      transform: translate(-50%, -50%) rotate(-20deg);
-      box-shadow: 0 0 8px rgba(250,204,21,0.6);
+    .vf-staff svg {
+      width: 100%;
+      height: 100%;
     }
   </style>
 </head>
@@ -178,15 +154,36 @@
   <div id="board"></div>
 
   <script>
+    // 12 notes per clef, now with real note keys for VexFlow EasyScore
+    // key: "C4" means middle C, staff position handled by VexFlow
     const notes = [
-      { id: "treble_C4", clef: "treble", letter: "C", y: 120 },
-      { id: "treble_D4", clef: "treble", letter: "D", y: 110 },
-      { id: "treble_E4", clef: "treble", letter: "E", y: 100 },
-      { id: "treble_F4", clef: "treble", letter: "F", y: 90  },
-      { id: "treble_G4", clef: "treble", letter: "G", y: 80  },
-      { id: "treble_A4", clef: "treble", letter: "A", y: 70  },
-      { id: "treble_B4", clef: "treble", letter: "B", y: 60  },
-      { id: "treble_C5", clef: "treble", letter: "C", y: 50  },
-      { id: "treble_D5", clef: "treble", letter: "D", y: 40  },
-      { id: "treble_E5", clef: "treble", letter: "E", y: 30  },
-      { id: "treble_F5", clef: "treble", letter: "_
+      // Treble clef
+      { id: "treble_C4", clef: "treble", letter: "C", key: "C4" },
+      { id: "treble_D4", clef: "treble", letter: "D", key: "D4" },
+      { id: "treble_E4", clef: "treble", letter: "E", key: "E4" },
+      { id: "treble_F4", clef: "treble", letter: "F", key: "F4" },
+      { id: "treble_G4", clef: "treble", letter: "G", key: "G4" },
+      { id: "treble_A4", clef: "treble", letter: "A", key: "A4" },
+      { id: "treble_B4", clef: "treble", letter: "B", key: "B4" },
+      { id: "treble_C5", clef: "treble", letter: "C", key: "C5" },
+      { id: "treble_D5", clef: "treble", letter: "D", key: "D5" },
+      { id: "treble_E5", clef: "treble", letter: "E", key: "E5" },
+      { id: "treble_F5", clef: "treble", letter: "F", key: "F5" },
+      { id: "treble_G5", clef: "treble", letter: "G", key: "G5" },
+
+      // Bass clef
+      { id: "bass_E2", clef: "bass", letter: "E", key: "E2" },
+      { id: "bass_F2", clef: "bass", letter: "F", key: "F2" },
+      { id: "bass_G2", clef: "bass", letter: "G", key: "G2" },
+      { id: "bass_A2", clef: "bass", letter: "A", key: "A2" },
+      { id: "bass_B2", clef: "bass", letter: "B", key: "B2" },
+      { id: "bass_C3", clef: "bass", letter: "C", key: "C3" },
+      { id: "bass_D3", clef: "bass", letter: "D", key: "D3" },
+      { id: "bass_E3", clef: "bass", letter: "E", key: "E3" },
+      { id: "bass_F3", clef: "bass", letter: "F", key: "F3" },
+      { id: "bass_G3", clef: "bass", letter: "G", key: "G3" },
+      { id: "bass_A3", clef: "bass", letter: "A", key: "A3" },
+      { id: "bass_B3", clef: "bass", letter: "B", key: "B3" }
+    ];
+
+    const boardEl = docu
