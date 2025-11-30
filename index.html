@@ -227,7 +227,10 @@
     let matches = 0;
     let clefMode = "both";   // "treble", "bass", "both"
 
-    // Build deck, with pairId = clef + letter (octave ignored)
+    // Build deck: for EVERY note in the clef(s), create:
+    // - 1 notation card
+    // - 1 letter card with same (clef, letter)
+    // pairId is clef+letter so duplicates share the same logical pair
     function buildDeck() {
       const arr = [];
       notes.forEach(n => {
